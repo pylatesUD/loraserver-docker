@@ -2,6 +2,8 @@ FROM centos7
 
 MAINTAINER Mainflux
 
+WORKDIR /opt/lora/lora-gateway-bridge
+
 ENV LORA_GATEWAY_BRIDGE 2.1.4
 ENV DOCKERIZE_VERSION v0.3.0
 

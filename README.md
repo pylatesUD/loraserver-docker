@@ -1,5 +1,7 @@
 # Mainflux Loraserver Docker
-Docker images for [Brocaar's Loraserver](https://github.com/brocaar/loraserver)
+Docker images for [Brocaar's Loraserver](https://github.com/brocaar/loraserver).
+
+`docker-compose` files can be found [here](https://github.com/mainflux/mainflux/tree/master/lora/brocaar).
 
 ### Documentation
 Development documentation can be found [here](http://mainflux.io).

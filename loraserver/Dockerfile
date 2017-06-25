@@ -4,7 +4,7 @@ MAINTAINER Mainflux
 
 WORKDIR /opt/lora/loraserver
 
-ENV LORASERVER_VERSION=0.19.0
+ENV LORASERVER_VERSION 0.19.0
 ENV DOCKERIZE_VERSION v0.3.0
 
 ADD https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz dockerize.tar.gz

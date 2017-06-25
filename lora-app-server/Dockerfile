@@ -2,7 +2,7 @@ FROM centos:7
 
 WORKDIR /opt/lora/lora-app-server
 
-ENV LORA_APP_SERVER 0.6.0
+ENV LORA_APP_SERVER 0.10.0
 ENV DOCKERIZE_VERSION v0.3.0
 
 ADD https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz dockerize.tar.gz

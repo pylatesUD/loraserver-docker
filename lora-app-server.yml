@@ -1,0 +1,45 @@
+version: "3"
+
+services:
+  appserver:
+    image: pylates/lora-app-server:latest
+    volumes:
+      - ./certs:/opt/lora/lora-app-server/certs
+    command: dockerize -wait tcp://mosquitto:1883 -wait tcp://redis:6379 -wait tcp://postgres:5432 -timeout 10s ./lora-app-server
+    ports:
+      - 8080:8080
+    networks:
+      - backend
+    environment:
+      - POSTGRES_DSN=postgres://loraserver:loraserver@postgres/loraserver?sslmode=disable
+      - DB_AUTOMIGRATE=true
+      - NS_SERVER=loraserver:8000
+      - REDIS_URL=redis://redis:6379
+      - MQTT_SERVER=tcp://mosquitto:1883
+      - HTTP_TLS_CERT=/opt/lora/lora-app-server/certs/http-tls.crt
+      - HTTP_TLS_KEY=/opt/lora/lora-app-server/certs/http-tls.key
+    depends_on:
+      - postgres
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+
+  postgres:
+    image: postgres:9.5
+    #ports:
+    #  - 5432:5432
+    environment:
+      - POSTGRES_PASSWORD=loraserver
+      - POSTGRES_USER=loraserver
+      - POSTGRES_DB=loraserver
+    networks:
+      - backend
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+
+networks:
+  loraserver_frontend:
+    external: true
+  loraserver_backend:
+    external: true

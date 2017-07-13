@@ -1,0 +1,121 @@
+version: "3"
+
+services:
+  appserver:
+    image: pylates/lora-app-server:latest
+    volumes:
+      - ./certs:/opt/lora/lora-app-server/certs
+    command: dockerize -wait tcp://postgres2:5432 -wait tcp://mosquitto:1883 -wait tcp://redis:6379 -timeout 20s ./lora-app-server
+    ports:
+      - 8080:8080
+    networks:
+      - backend
+    environment:
+      - POSTGRES_DSN=postgres://loraserver:loraserver@postgres2/loraserver?sslmode=disable
+      - DB_AUTOMIGRATE=true
+      - NS_SERVER=loraserver:8000
+      - REDIS_URL=redis://redis:6379
+      - MQTT_SERVER=tcp://mosquitto:1883
+      - HTTP_TLS_CERT=/opt/lora/lora-app-server/certs/http-tls.crt
+      - HTTP_TLS_KEY=/opt/lora/lora-app-server/certs/http-tls.key
+    depends_on:
+      - loraserver
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+
+  loraserver:
+    image: pylates/loraserver:latest
+#    command: loraserver
+    command: dockerize -wait tcp://postgres:5432 -wait tcp://mosquitto:1883 -wait tcp://redis:6379 -timeout 20s ./loraserver
+    volumes:
+      - serverdata:/go/src/github.com/brocaar/loraserver
+    networks:
+      - backend
+    depends_on:
+      - postgres
+      - postgres_test
+      - mosquitto
+      - redis
+      - redis_test
+    environment:
+      - BAND=EU_863_870
+      - POSTGRES_DSN=postgres://loraserver:loraserver@postgres/loraserver?sslmode=disable
+      - DB_AUTOMIGRATE=true
+      - NET_ID=010203
+      - AS_SERVER=appserver:8001
+      - REDIS_URL=redis://redis:6379
+      - GW_MQTT_SERVER=tcp://mosquitto:1883
+      - APP_MQTT_SERVER=tcp://mosquitto:1883
+      - GW_CREATE_ON_STATS
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+
+  gatewaybridge:
+    image: pylates/lora-gateway-bridge:latest
+    command:  dockerize -wait tcp://mosquitto:1883 -timeout 20s ./lora-gateway-bridge
+    ports:
+      - "1700:1700/udp"
+    volumes:
+      - bdata:/go/src/github.com/brocaar/lora-gateway-bridge
+    networks:
+      - backend
+    environment:
+      - MQTT_SERVER=tcp://mosquitto:1883
+      - TEST_MQTT_SERVER=tcp://mosquitto:1883
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+
+  postgres:
+    image: postgres:9.5
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_PASSWORD=loraserver
+      - POSTGRES_USER=loraserver
+      - POSTGRES_DB=loraserver
+    networks:
+      - backend
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+  postgres2:
+    image: postgres:9.5
+    #ports:
+    #  - 5432:5432
+    environment:
+      - POSTGRES_PASSWORD=loraserver
+      - POSTGRES_USER=loraserver
+      - POSTGRES_DB=loraserver
+    networks:
+      - backend
+    volumes:
+      - dbdata2:/var/lib/postgresql/data
+  redis:
+    image: redis:3.0.7-alpine
+    networks:
+      - backend
+
+  mosquitto:
+    image: ansi/mosquitto
+    ports:
+      - 1883:1883
+    networks:
+      - backend
+
+networks:
+  backend:
+  frontend:
+
+
+volumes:
+  serverdata:
+  app:
+  dbdata:
+  dbdata2:
+  dbdata_test:
+  bdata:

@@ -1,0 +1,28 @@
+version: "3"
+
+services:
+  gatewaybridge:
+    image: pylates/lora-gateway-bridge:latest
+    command:  dockerize -wait tcp://mosquitto:1883 -timeout 10s ./lora-gateway-bridge
+    ports:
+      - "1700:1700/udp"
+    volumes:
+      - bdata:/go/src/github.com/brocaar/lora-gateway-bridge
+    networks:
+      - backend
+      - lora_broker
+    environment:
+      - MQTT_SERVER=tcp://mosquitto:1883
+      - TEST_MQTT_SERVER=tcp://mosquitto:1883
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+
+networks:
+  backend:
+  lora_broker:
+    external: true
+
+volumes:
+  bdata:

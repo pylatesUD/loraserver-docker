@@ -1,0 +1,68 @@
+version: "3"
+
+services:
+  loraserver:
+    image: pylates/loraserver:latest
+    command: dockerize -wait tcp://postgres:5432 -wait tcp://mosquitto:1883 -wait tcp://redis:6379 -timeout 10s ./loraserver
+    volumes:
+      - serverdata:/go/src/github.com/brocaar/loraserver
+    networks:
+      - backend
+    depends_on:
+      - postgres
+      - postgres_test
+      - mosquitto
+      - redis
+      - redis_test
+    environment:
+      - BAND=EU_863_870
+      - POSTGRES_DSN=postgres://loraserver:loraserver@postgres/loraserver?sslmode=disable
+      - DB_AUTOMIGRATE=true
+      - NET_ID=010203
+      - AS_SERVER=appserver:8001
+      - REDIS_URL=redis://redis:6379
+      - GW_MQTT_SERVER=tcp://mosquitto:1883
+      - APP_MQTT_SERVER=tcp://mosquitto:1883
+      - GW_CREATE_ON_STATS
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+
+
+
+  postgres:
+    image: postgres:9.5
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_PASSWORD=loraserver
+      - POSTGRES_USER=loraserver
+      - POSTGRES_DB=loraserver
+    networks:
+      - backend
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:3.0.7-alpine
+    networks:
+      - backend
+
+  mosquitto:
+    image: ansi/mosquitto
+    ports:
+      - 1883:1883
+    networks:
+      - backend
+      - lora_broker
+
+networks:
+  backend:
+  frontend:
+
+
+volumes:
+  serverdata:
+  dbdata:
+  bdata:
